@@ -70,13 +70,13 @@ function [eigen_values stability] = check_eigen_values(eqbm_pts, jacobian_matric
     matrix = jacobian_matrices{k};
     flag = 1;
     ################## ADD YOUR CODE HERE ######################
-    ans = eig(matrix);
+    ans = double(eig(matrix));
     for i = 1:length(ans)
       if real(ans(i)) > 0
         flag = 0;
       endif
-        
     endfor
+    eigen_values{k} = ans;
   
     ############################################################
     if flag == 1

@@ -35,13 +35,14 @@ function [eigen_values stability] = check_eigen_values(eqbm_pts, jacobian_matric
     matrix = jacobian_matrices{k};
     flag = 1;
     ################## ADD YOUR CODE HERE ######################
-    ans = eig(matrix);
+    ans = double(eig(matrix));
     for i = 1:length(ans)
       if real(ans(i)) > 0
         flag = 0;
       endif
-        
     endfor
+    eigen_values{k} = ans;
+    
     ############################################################
     if flag == 1
       fprintf("The system is stable for equilibrium point (%d, %d) \n",double(eqbm_pts{k}.x1),double(eqbm_pts{k}.x2));
@@ -55,7 +56,7 @@ endfunction
 equilibrium_points = find_equilibrium_points(x1_dot, x2_dot);
 jacobians = find_jacobian_matrices(equilibrium_points, x1_dot, x2_dot);
 [eigen_values stability] = check_eigen_values(equilibrium_points, jacobians); 
-
+disp(eigen_values);
 
 
 
