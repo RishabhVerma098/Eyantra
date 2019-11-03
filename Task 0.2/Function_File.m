@@ -44,7 +44,7 @@ function jacobian_matrices = find_jacobian_matrices(eqbm_points, x1_dot, x2_dot)
   ################## ADD YOUR CODE HERE ######################
   ans = jacobian([x1_dot;x2_dot]);
   for i = 1:columns(eqbm_points)
-      jacobian_matrices{i} = subs(ans,{x1 x2},{eqbm_points{i}.x1 eqbm_points{i}.x2});
+      jacobian_matrices{i} = double(subs(ans,{x1 x2},{eqbm_points{i}.x1 eqbm_points{i}.x2}));
   endfor
   
   ############################################################  
