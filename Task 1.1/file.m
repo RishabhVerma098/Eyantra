@@ -1,4 +1,5 @@
-global A = csvread('csv_matter.csv');
+global A = csvread('cvs_matter.csv');
+global C = csvread('e_yantra_csv_output.csv');
 global y_low_x = [];
 global y_low_y = [];
 global y_low_z = [];
@@ -7,6 +8,10 @@ global y_high_y = [];
 global y_high_z = [];
 global n_low = 0;
 global n_high = 0;
+global final_pitch = [];
+global final_roll = [];
+global pitch_count = 1;
+global roll_count = 1 ;
 
 function read_accel(axl,axh,ayl,ayh,azl,azh)  
   signals = [axl,axh,ayl,ayh,azl,azh];
@@ -22,9 +27,9 @@ function read_accel(axl,axh,ayl,ayh,azl,azh)
     endif
     eightBit{i} = x;
   endfor
-  ax = bin2dec(strcat(eightBit{2},eightBit{1}));
-  ay = bin2dec(strcat(eightBit{4},eightBit{3}));
-  az = bin2dec(strcat(eightBit{6},eightBit{5}));
+  ax = bin2dec(strcat(eightBit{1},eightBit{2}));
+  ay = bin2dec(strcat(eightBit{3},eightBit{4}));
+  az = bin2dec(strcat(eightBit{5},eightBit{6}));
   
   combined_signals = [ax,ay,az];
   
@@ -38,8 +43,6 @@ function read_accel(axl,axh,ayl,ayh,azl,azh)
   for i =1:length(combined_signals)
     combined_signals(i) = combined_signals(i)/scaling_factor;
   endfor
- 
-  disp(combined_signals);
   lowpassfilter(combined_signals(1),combined_signals(2),combined_signals(3),5);
 endfunction
 
@@ -60,9 +63,9 @@ function read_gyro(gxl,gxh,gyl,gyh,gzl,gzh)
     endif
     eightBit{i} = x;
   endfor
-  gx = bin2dec(strcat(eightBit{2},eightBit{1}));
-  gy = bin2dec(strcat(eightBit{4},eightBit{3}));
-  gz = bin2dec(strcat(eightBit{6},eightBit{5}));
+  gx = bin2dec(strcat(eightBit{1},eightBit{2}));
+  gy = bin2dec(strcat(eightBit{3},eightBit{4}));
+  gz = bin2dec(strcat(eightBit{5},eightBit{6}));
   
   combined_signals = [gx,gy,gz];
   for i =1:length(combined_signals)
@@ -98,6 +101,7 @@ function lowpassfilter(ax,ay,az,f_cut)
     n_low++;
   endif 
 endfunction
+
 function highpassfilter(gx,gy,gz,f_cut)
   global y_high_x;
   global y_high_y;
@@ -122,25 +126,72 @@ endfunction
 
 
 function comp_filter_pitch(ax,ay,az,gx,gy,gz)
-
-  ##############################################
-  ####### Write a code here to calculate  ######
-  ####### PITCH using complementry filter ######
-  ##############################################
-
+  global pitch_count;
+  global final_pitch;
+  alpha = 0.03;
+  dt    = 0.01;
+  
+  
+  acc_pitch_intermediate = 180 * atan2 (ay,abs(az))/pi;
+  gyro_pitch_intermediate = gx;
+  
+  
+  if (pitch_count == 1)
+    angle = 0;
+    result1 = (gyro_pitch_intermediate*dt);
+    result1 = result1 + angle;
+    result2 = 1-alpha;
+    result3 = alpha*acc_pitch_intermediate;
+    result4 = result1*result2;
+    result = result4 + result3;
+    final_pitch{1} = result;
+    pitch_count++;
+  else
+    angle = final_pitch{pitch_count-1};
+    result1 = (gyro_pitch_intermediate*dt);
+    result1 = result1 + angle;
+    result2 = 1-alpha;
+    result3 = alpha*acc_pitch_intermediate;
+    result4 = result1*result2;
+    result = result4 + result3;
+    final_pitch{pitch_count} = result;
+    pitch_count++;
+  endif
 endfunction 
 
 function comp_filter_roll(ax,ay,az,gx,gy,gz)
+  global roll_count;
+  global final_roll;
+  alpha = 0.03;
+  dt    = 0.01;
 
-  ##############################################
-  ####### Write a code here to calculate #######
-  ####### ROLL using complementry filter #######
-  ##############################################
-
+  acc_roll_intermediate = 180 * atan2(ax,abs(az)) / pi;
+  gyro_roll_intermediate = gy;
+ 
+  if (roll_count == 1)
+    angle = 0;
+    result1 = (angle(1) + gyro_roll_intermediate*dt);
+    result2 = 1-alpha;
+    result3 = alpha*acc_roll_intermediate;
+    result4 = result1*result2;
+    result = result4 + result3;
+    final_roll{1} = result;
+    roll_count++;
+  else
+    angle = final_roll{roll_count-1};
+    result1 = (angle + gyro_roll_intermediate*dt);
+    result2 = 1-alpha;
+    result3 = alpha*acc_roll_intermediate;
+    result4 = result1*result2;
+    result = result4 + result3;
+    final_roll{roll_count} = result;
+    roll_count++;
+  endif
 endfunction 
 
 function execute_code
-  global A
+  global A;
+  global C;
   global y_low_x;
   global y_low_y;
   global y_low_z;
@@ -149,7 +200,39 @@ function execute_code
   global y_high_y;
   global y_high_z;
   global n_high;
-  #temporary
+  global final_pitch;
+  global final_roll;
+  global pitch_count;
+  global roll_count;
+  for n = 1:rows(A)  
+    read_accel(A(n,1),A(n,2),A(n,3),A(n,4),A(n,5),A(n,6));
+    read_gyro(A(n,7),A(n,8),A(n,9),A(n,10),A(n,11),A(n,12));
+    comp_filter_pitch(y_low_x(n),y_low_y(n),y_low_z(n),y_high_x(n),y_high_y(n),y_high_z(n));
+    comp_filter_roll(y_low_x(n),y_low_y(n),y_low_z(n),y_high_x(n),y_high_y(n),y_high_z(n));
+  endfor
+   array_final_pitch = [];
+   array_final_roll = [];
+   for i = 1 : length(final_pitch)
+      array_final_pitch(i) = final_pitch{i};
+      array_final_roll(i) = final_roll{i};
+   endfor
+   col_pitch = C(:,1);
+   plot(array_final_pitch);
+   hold on;
+   #plot(array_final_roll);
+   #hold on;
+   plot(col_pitch);
+   disp("from here")
+   for i = 1:length(array_final_pitch)
+    for j = 1:2
+      if j == 1
+        B(i,j) =  array_final_pitch(i);
+      else
+        B(i,j) = array_final_roll(i);
+      endif
+    endfor
+  endfor
+  csvwrite('output_data_abhinav.csv',B);     
   y_low_x = [];
   y_low_y = [];
   y_low_z = [];
@@ -158,24 +241,11 @@ function execute_code
   y_high_y = [];
   y_high_z = [];
   n_high = 0;
-  #for n = 1:rows(A)   #do not change this line
-    
-    ###############################################
-    ####### Write a code here to calculate  #######
-    ####### PITCH using complementry filter #######
-    ###############################################
-    
-  #endfor
-  read_accel(1,160,0,196,60,0);  
-  read_gyro(254,140,0,132,0,76);
-  disp(y_low_x);
-  disp(y_low_y);
-  disp(y_low_z);
-  disp(n_low)
-  disp(y_high_x);
-  disp(y_high_y);
-  disp(y_high_z);
-  disp(n_high);
+  final_pitch = [];
+  final_roll = [];
+  pitch_count = 1;
+  roll_count = 1;
+  B =[];
   
 endfunction
 
