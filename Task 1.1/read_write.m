@@ -16,7 +16,7 @@ function read_accel(axl,axh,ayl,ayh,azl,azh)
   signals = [axl,axh,ayl,ayh,azl,azh];
   appendstr = '00000000';
   eightBit = {};
-  scaling_factor = 16384;
+  scaling_factor = 16384*2;
   for i=1:length(signals)
     x = dec2bin(signals(i));
     if length(x) < 8
@@ -51,7 +51,7 @@ function read_gyro(gxl,gxh,gyl,gyh,gzl,gzh)
  signals = [gxl,gxh,gyl,gyh,gzl,gzh];
   appendstr = '00000000';
   eightBit = {};
-  scaling_factor = 16384;
+  scaling_factor = 250*131;
   for i=1:length(signals)
     x = dec2bin(signals(i));
     if length(x) < 8
@@ -76,7 +76,7 @@ function read_gyro(gxl,gxh,gyl,gyh,gzl,gzh)
   for i =1:length(combined_signals)
     combined_signals(i) = combined_signals(i)/scaling_factor;
   endfor
-  highpassfilter(combined_signals(1),combined_signals(2),combined_signals(3),5);
+  highpassfilter(combined_signals(1),combined_signals(2),combined_signals(3),4.5);
 endfunction
 
 
@@ -135,7 +135,8 @@ function comp_filter_pitch(ax,ay,az,gx,gy,gz)
   dt    = 0.01;
   
   
-  acc_pitch_intermediate = 180 * atan2 (ay,abs(az))/pi;
+  acc_pitch_intermediate = 180/pi * atan2 (ay,abs(az));
+  #disp(acc_pitch_intermediate );
   gyro_pitch_intermediate = gx;
   
   
@@ -169,7 +170,7 @@ function comp_filter_roll(ax,ay,az,gx,gy,gz)
   alpha = 0.03;
   dt    = 0.01;
 
-  acc_roll_intermediate = 180 * atan2(ax,abs(az)) / pi;
+  acc_roll_intermediate = 180/pi * atan2(ax,abs(az)) ;
   gyro_roll_intermediate = gy;
  
   if (roll_count == 1)
@@ -208,8 +209,8 @@ function execute_code
   global final_roll;
   global pitch_count;
   global roll_count;
-  B=[];
-  for n = 1:rows(A)                    #do not change this line
+  for n = 1:1000
+    disp(n);
     read_accel(A(n,1),A(n,2),A(n,3),A(n,4),A(n,5),A(n,6));
     read_gyro(A(n,7),A(n,8),A(n,9),A(n,10),A(n,11),A(n,12));
     comp_filter_pitch(y_low_x(n),y_low_y(n),y_low_z(n),y_high_x(n),y_high_y(n),y_high_z(n));
@@ -233,7 +234,21 @@ function execute_code
       endif
     endfor
   endfor  
-  csvwrite('output_data.csv',B);        #do not change this line
+  csvwrite('output_data.csv',B);  
+  y_low_x = [];
+  y_low_y = [];
+  y_low_z = [];
+  n_low = 0;
+  y_high_x = [];
+  y_high_y = [];
+  y_high_z = [];
+  n_high = 0;
+  final_pitch = [];
+  final_roll = [];
+  pitch_count = 1;
+  roll_count = 1;
+  B =[];
+  B=[];
 endfunction
 
 

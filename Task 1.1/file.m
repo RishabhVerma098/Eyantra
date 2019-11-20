@@ -1,4 +1,4 @@
-global A = csvread('cvs_matter.csv');
+global A = csvread('csv_matter.csv');
 global C = csvread('e_yantra_csv_output.csv');
 global y_low_x = [];
 global y_low_y = [];
@@ -12,7 +12,7 @@ global final_pitch = [];
 global final_roll = [];
 global pitch_count = 1;
 global roll_count = 1 ;
-
+#17161
 function read_accel(axl,axh,ayl,ayh,azl,azh)  
   signals = [axl,axh,ayl,ayh,azl,azh];
   appendstr = '00000000';
@@ -53,7 +53,7 @@ function read_gyro(gxl,gxh,gyl,gyh,gzl,gzh)
  signals = [gxl,gxh,gyl,gyh,gzl,gzh];
   appendstr = '00000000';
   eightBit = {};
-  scaling_factor = 16384;
+  scaling_factor = 17161;
   for i=1:length(signals)
     x = dec2bin(signals(i));
     if length(x) < 8
