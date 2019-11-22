@@ -162,7 +162,7 @@ endfunction
 function [t,y] = lqr_pendulum(m, g, L, y_setpoint, y0)
   [A,B] =  pendulum_AB_matrix(m, g, L);               ## Initialize A and B matrix
   Q = [1 0 ;0 1];                     ## Initialise Q matrix
-  R = 1;                   ## Initialise R 
+  R = 2;                   ## Initialise R 
   
   K = lqr(A,B,Q,R);                       ## Calculate K matrix from A,B,Q,R matrices
   
@@ -182,11 +182,12 @@ function simple_pendulum_main()
   y_setpoint = [pi; 0];               ## Set Point 
   y0 = [pi/6 ; 0];                   ## Initial condtion
   
-  [t,y] = sim_pendulum(m,g,L, y0);        ## Test Simple Pendulum
+  #[t,y] = sim_pendulum(m,g,L, y0)        ## Test Simple Pendulum
   #[t,y] = pole_place_pendulum(m,g,L, y_setpoint, y0) ## Test Simple Pendulum with Pole Placement Controller
-  #t,y] = lqr_pendulum(m,g,L, y_setpoint, y0);        ## Test Simple Pendulum with LQR Controller
+  [t,y] = lqr_pendulum(m,g,L, y_setpoint, y0)       ## Test Simple Pendulum with LQR Controller
 
   for k = 1:length(t)
     draw_pendulum(y(k, :), L);  
   endfor
 endfunction
+simple_pendulum_main
